@@ -7,21 +7,21 @@
    <!--表单 start-->
    <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" class="login-form" size="medium">
 
-  <el-form-item prop="pass" class="item-form">
+  <el-form-item prop="username" class="item-form">
     <label>邮箱</label>
-    <el-input type="password" v-model="ruleForm.pass" autocomplete="off"></el-input>
+    <el-input type="text" v-model="ruleForm.username" autocomplete="off"></el-input>
   </el-form-item>
 
-  <el-form-item prop="checkPass"  class="item-form">
+  <el-form-item prop="password"  class="item-form">
     <label>密码</label>
-    <el-input type="password" v-model="ruleForm.checkPass" autocomplete="off"></el-input>
+    <el-input type="password" v-model="ruleForm.password" autocomplete="off" maxlength="20" minlength="6"></el-input>
   </el-form-item>
 
-  <el-form-item prop="age"  class="item-form">
+  <el-form-item prop="code"  class="item-form">
     <label>验证码</label>
     <el-row :gutter="10">
-      <el-col :span="15"><el-input v-model.number="ruleForm.age"></el-input></el-col>
-      <el-col :span="9"> <el-button type="success" class="block">获取验证码</el-button></el-col> 
+      <el-col :span="15"><el-input v-model.number="ruleForm.code" maxlength="6" minlength="6"></el-input></el-col>
+      <el-col :span="9"> <el-button type="success" class="block" >获取验证码</el-button></el-col> 
     </el-row>
   </el-form-item>
   <el-form-item>
@@ -32,40 +32,44 @@
   </div>
 </template>
 <script>
+import { stripscript } from '@/utils/validate.js'
 export default {
   name:"login",
   data(){
-    var checkAge = (rule, value, callback) => {
-        if (!value) {
-          return callback(new Error('年龄不能为空'));
+    
+      //验证用户名
+      var validateUsername = (rule, value, callback) => {
+        let reg = /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/;  //定义邮箱正则表达式
+        if (value === '') {
+          callback(new Error('请输入用户名'));
+        } else if(!reg.test(value)){    //验证输入的邮箱格式是否正确
+          callback(new Error('用户名格式错误'));
+        }else {
+          callback();  //true
         }
-        setTimeout(() => {
-          if (!Number.isInteger(value)) {
-            callback(new Error('请输入数字值'));
-          } else {
-            if (value < 18) {
-              callback(new Error('必须年满18岁'));
-            } else {
-              callback();
-            }
-          }
-        }, 1000);
       };
-      var validatePass = (rule, value, callback) => {
+      //验证密码
+      var validatePassword = (rule, value, callback) => {
+        this.ruleForm.value = stripscript(value)
+        value = this.ruleForm.value
+        console.log(value)
+
+        let reg = /^(?!\D+$)(?![^a-zA-Z]+$)\S{6,20}$/  //定义数字加字母的正则表达式
         if (value === '') {
           callback(new Error('请输入密码'));
+        } else if (!reg.test(value)) {
+          callback(new Error('密码必须为6到20位的数字加字母!'));
         } else {
-          if (this.ruleForm.checkPass !== '') {
-            this.$refs.ruleForm.validateField('checkPass');
-          }
           callback();
         }
       };
-      var validatePass2 = (rule, value, callback) => {
-        if (value === '') {
-          callback(new Error('请再次输入密码'));
-        } else if (value !== this.ruleForm.pass) {
-          callback(new Error('两次输入密码不一致!'));
+      //验证验证码
+      var validateCode = (rule, value, callback) => {
+        let reg = /^[a-z0-9]{6}$/ //定义数字或字母的正则表达式
+        if (value ==='') {
+           return callback(new Error('验证码不能为空'));
+        } else if(!reg.test(value)){
+            return callback(new Error('验证码格式有误!'));
         } else {
           callback();
         }
@@ -77,19 +81,19 @@ export default {
       ],
       //表单的数据
       ruleForm: {
-          pass: '',
-          checkPass: '',
-          age: ''
+          username: '',
+          password: '',
+          code: ''
         },
         rules: {
-          pass: [
-            { validator: validatePass, trigger: 'blur' }
+          username: [
+            { validator: validateUsername, trigger: 'blur' }
           ],
-          checkPass: [
-            { validator: validatePass2, trigger: 'blur' }
+          password: [
+            { validator: validatePassword, trigger: 'blur' }
           ],
-          age: [
-            { validator: checkAge, trigger: 'blur' }
+          code: [
+            { validator: validateCode, trigger: 'blur' }
           ]
         }
     }
